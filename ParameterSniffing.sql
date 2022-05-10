@@ -1,4 +1,4 @@
-/* Identify queries that has high variations of read/cpu time as a ign of parameter sniffing issue */
+/* Identify queries that has high variations of read/cpu time as a sign of parameter sniffing issue */
 WITH Execution_Detail AS (
 SELECT SUBSTRING(ST.text, (QS.statement_start_offset / 2) + 1, ((CASE statement_end_offset
                                                         WHEN-1
