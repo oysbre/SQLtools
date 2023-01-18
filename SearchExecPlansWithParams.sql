@@ -23,8 +23,8 @@ CROSS APPLY sys.dm_exec_sql_text(qs.sql_handle) qt
 CROSS APPLY sys.dm_exec_query_plan(qs.plan_handle) qp
 CROSS APPLY sys.dm_exec_text_query_plan(qs.plan_handle, qs.statement_start_offset, qs.statement_end_offset) etqp
 
-where qt.text like '%INVENTSUM A,INVENTDIM B%'
-and qt.text like '%INVENTLOCATIONID%'
+where qt.text like '%INVENTSUM A,INVENTDIM B%'  -- COLLATE SQL_Latin1_General_CP1_CS_AS --Case sensitive search
+--and qt.text like '%INVENTLOCATIONID%'
 --and qt.text like '%%'
 --and last_logical_reads > 100000
 --and qs.last_elapsed_time/1000000 > 400
