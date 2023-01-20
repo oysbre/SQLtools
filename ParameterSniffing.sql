@@ -6,6 +6,7 @@ SELECT SUBSTRING(ST.text, (QS.statement_start_offset / 2) + 1, ((CASE statement_
                                                         ELSE QS.statement_end_offset
                                                     END - QS.statement_start_offset) / 2) + 1) AS [Query Statement], 
         ST.text AS 'Procedure Batch',
+	qs.execution_count,
         min_worker_time, max_worker_time,
         ISNULL((max_worker_time - min_worker_time) / NULLIF(min_worker_time, 0), 0) AS LogicalCpuRatio, 
         min_logical_reads,max_logical_reads,
