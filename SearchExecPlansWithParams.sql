@@ -17,7 +17,7 @@ qs.last_worker_time
 ,CAST (qs.last_elapsed_time / 1000000.0 AS DECIMAL(28, 2)) AS [Last_elapsed_(s)]
 ,CAST(qs.total_worker_time * 100.0 / qs.total_elapsed_time AS DECIMAL(28, 2)) AS [% CPU]
 ,qs.last_execution_time, qp.query_plan
---,CONVERT(XML,SUBSTRING(etqp.query_plan,CHARINDEX('<ParameterList>',etqp.query_plan), CHARINDEX('</ParameterList>',etqp.query_plan) + LEN('</ParameterList>') - CHARINDEX('<ParameterList>',etqp.query_plan) )) AS Parameters
+REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(CAST(TRY_CONVERT(XML,SUBSTRING(etqp.query_plan,CHARINDEX('<ParameterList>',etqp.query_plan), CHARINDEX('</ParameterList>',etqp.query_plan) + LEN('</ParameterList>') - CHARINDEX('<ParameterList>',etqp.query_plan) )) AS NVARCHAR(MAX)),'<',''),'>',''),'"',''),'/',' '),'ParameterList',''),'ColumnReference Column=',''),'ParameterDataType=',''),'ParameterCompiledValue=','')  AS CompiledParameters 
 FROM sys.dm_exec_query_stats qs
 CROSS APPLY sys.dm_exec_sql_text(qs.sql_handle) qt
 CROSS APPLY sys.dm_exec_query_plan(qs.plan_handle) qp
