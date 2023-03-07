@@ -7,3 +7,4 @@ scripts to tune and optimize SQL queries
 - RunningQueries.sql displays current running queries along with cursors and their plan
 - SearchExecPlansWithParams.sql search for plans ordered by last logical reads with their compiled parameter values.
 - VLFCounts.sql detects high VLF counts which can be a problem with time used on restore.
+- CreateRSExecRole.sql creates the custom SSRS databaserole used for subscriptions. Useful for AlwaysOn environment.
