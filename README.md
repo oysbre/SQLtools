@@ -1,5 +1,6 @@
 # SQLtools
 scripts to tune and optimize SQL queries
+- CompiledParameterValues get compiled parameter values from a specific Stored Procedure name
 - ExportSQLUser is used for exporting users on a SQL instance and then create users on a new SQL instance
 - GetBlockSize.ps1 checks the cluster size of disk volums.
 - MissingIndex.sql create a report of missing indexes.
