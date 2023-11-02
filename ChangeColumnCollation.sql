@@ -1,8 +1,7 @@
 /*--#################################################################################################
--- This script only list out commands and don't actually run them. The cursor that run the scriptcommands are commented out
+-- This script only list out commands and don't actually run them. The cursor in the end of the script that run the scriptcommands are commented out.
 -- always take a backuo of the database first or run the script on a backup
 -- because of a reference to 'sys.sql_expression_dependencies', this is valid only for SQL2008 and above.
--- Brainstorm: first map out a list of all the objects to change;
 
 --simple constraints
 --STEP_00x Fulltext search
@@ -42,7 +41,7 @@
 --Declare and assign collation variable as the same as Database collation
 --#################################################################################################*/
 
-DECLARE @NewCollation VARCHAR(128) = CONVERT(varchar,(SELECT DATABASEPROPERTYEX(db_name(),'Collation')))  --'Latin1_General_CI_AS'; --'SQL_Latin1_General_CP1_CI_AS' -- change this to the collation that you need
+DECLARE @NewCollation VARCHAR(128) = CONVERT(varchar,(SELECT DATABASEPROPERTYEX(db_name(),'Collation')))  --'Latin1_General_CI_AS'; --'SQL_Latin1_General_CP1_CI_AS' /* or change this to the collation that you need */
 
 IF OBJECT_ID('tempdb.[dbo].[#Results]') IS NOT NULL
 DROP TABLE [dbo].[#Results];
@@ -102,7 +101,7 @@ WHERE colz.collation_name IS NOT NULL
 
 --STEP_00X check if columns are in a FullText searchcatalog
 
---#################################################################################################*/
+--################################################################################################# */
 
 INSERT INTO #Results
 
