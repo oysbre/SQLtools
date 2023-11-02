@@ -80,20 +80,14 @@ INTO
  #MyAffectedTables
 
 FROM sys.columns colz
-
  INNER JOIN sys.tables objz
-
  ON colz.object_id = objz.object_id
-
 WHERE colz.collation_name IS NOT NULL
-
  AND objz.is_ms_shipped = 0
-
  AND colz.is_computed = 0
-
  AND colz.collation_name <> @NewCollation
 
- /* -- filter on Tablename if needed */
+	/* -- filter on Tablename if needed */
  --AND objz.name like 'CUSTCOLL%'
  ;
 
@@ -111,7 +105,7 @@ SELECT
 
  9 AS ExecutionOrder,
 
- CONVERT(VARCHAR(8000), 'EXEC sp_fulltext_column @tabname ' + QUOTENAME(tabz.SchemaName) + '.' + QUOTENAME(tabz.TableName) + ' ,@colname ' + QUOTENAME(colz.name) + ' ,@action DROP;') AS Command
+ CONVERT(VARCHAR(8000), 'EXEC sp_fulltext_column ' + QUOTENAME(tabz.SchemaName) + '.' + QUOTENAME(tabz.TableName) + ' , ' + QUOTENAME(colz.name) + ' , DROP;') AS Command
 
 FROM 
     sys.tables objz
@@ -154,7 +148,7 @@ SELECT
 
  899 AS ExecutionOrder,
 
- CONVERT(VARCHAR(8000), 'EXEC sp_fulltext_column @tabname ' + QUOTENAME(tabz.SchemaName) + '.' + QUOTENAME(tabz.TableName) + ' ,@colname ' + QUOTENAME(colz.name) + ' ,@action ADD;') AS Command
+ CONVERT(VARCHAR(8000), 'EXEC sp_fulltext_column ' + QUOTENAME(tabz.SchemaName) + '.' + QUOTENAME(tabz.TableName) + ' , ' + QUOTENAME(colz.name) + ' , ADD;') AS Command
 
 FROM 
     sys.tables objz
@@ -286,13 +280,11 @@ FROM sys.default_constraints conz
 
  AND conz.parent_column_id = tabz.column_id;
 
---#################################################################################################
-
+/* --#################################################################################################
 --STEP_003 calculated columns : refering internal columns to the table
+--################################################################################################# */
 
---#################################################################################################
-
---need distinct in case of a calculated columns appending two or more columns together: we need the definition only once.
+/* --need distinct in case of a calculated columns appending two or more columns together: we need the definition only once. */
 
 INSERT INTO #Results
 
@@ -384,19 +376,11 @@ FROM sys.columns colz
 
 WHERE colz.is_computed = 1;
 
---#################################################################################################
-
+/* --#################################################################################################
 --STEP_004 foreign key constriants :child references
+--################################################################################################# */
 
---#################################################################################################
-
-/*--visualize the data
-
---at least in my case, it is very rare to have a char column as the value for a FK; my FK's are all int/bigint
-
---I had to create a fake pair of tables to test this.
-
-*/
+/* --visualize the data  it is very rare to have a char column as the value for a FK */
 
 INSERT INTO #Results
 
@@ -606,11 +590,11 @@ conz.parent_object_id,--- without GROUP BY multiple rows are returned
 
  ON conz.name = ParentCollection.name;
 
---#################################################################################################
+/* --#################################################################################################
 
 --STEP_005, 006 and 007 primary keys,unique indexes,regular indexes
 
---#################################################################################################
+--################################################################################################# */
 
 /*pre-quel sequel to gather the data:*/
 
@@ -1104,7 +1088,7 @@ WHERE objz.type = 'U'
 -- refresh them in dependancy order in a single pass.
 --################################################################################################# */
 
-*/ --if there was nothing with the wrong collation, there's no need to refresh: */
+/* --if there was nothing with the wrong collation, there's no need to refresh: */
 
 IF (SELECT
 
