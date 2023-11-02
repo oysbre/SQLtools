@@ -1,6 +1,6 @@
 /*--#################################################################################################
 -- This script only list out commands and don't actually run them. The cursor in the end of the script that run the scriptcommands are commented out.
--- always take a backuo of the database first or run the script on a backup
+-- always take a backup of the database first or run the script on a backup
 -- because of a reference to 'sys.sql_expression_dependencies', this is valid only for SQL2008 and above.
 
 --simple constraints
@@ -41,7 +41,7 @@
 --Declare and assign collation variable as the same as Database collation
 --#################################################################################################*/
 
-DECLARE @NewCollation VARCHAR(128) = CONVERT(varchar,(SELECT DATABASEPROPERTYEX(db_name(),'Collation')))  --'Latin1_General_CI_AS'; --'SQL_Latin1_General_CP1_CI_AS' /* or change this to the collation that you need */
+DECLARE @NewCollation VARCHAR(128) = CONVERT(varchar,(SELECT DATABASEPROPERTYEX(db_name(),'Collation'))) /*  --'Latin1_General_CI_AS'; --'SQL_Latin1_General_CP1_CI_AS' or change this to the collation that you need */
 
 IF OBJECT_ID('tempdb.[dbo].[#Results]') IS NOT NULL
 DROP TABLE [dbo].[#Results];
@@ -93,7 +93,7 @@ WHERE colz.collation_name IS NOT NULL
 
  AND colz.collation_name <> @NewCollation
 
- -- filter on Tablename
+ /* -- filter on Tablename if needed */
  --AND objz.name like 'CUSTCOLL%'
  ;
 
@@ -774,88 +774,48 @@ FROM (SELECT
  ON IDX.object_id = p.object_id
     AND IDX.index_id = p.index_id
  INNER JOIN (SELECT
-
  [object_id],
-
  index_id,
-
  SUM(row_count) AS Rows,
-
  CONVERT(NUMERIC(19, 3), CONVERT(NUMERIC(19, 3), SUM(in_row_reserved_page_count+lob_reserved_page_count+row_overflow_reserved_page_count))/CONVERT(NUMERIC(19, 3), 128)) AS SizeMB
-
  FROM sys.dm_db_partition_stats STATS
-
  GROUP BY
-
  [object_id],
-
  index_id) AS partitions
-
  ON IDX.[object_id] = partitions.[object_id]
-
  AND IDX.index_id = partitions.index_id
-
  CROSS APPLY (SELECT
-
  LEFT(index_columns_key, LEN(index_columns_key) - 1) COLLATE database_default AS index_columns_key,
-
  LEFT(index_columns_include, LEN(index_columns_include) - 1) COLLATE database_default AS index_columns_include
-
  FROM (SELECT
-
  (SELECT
-
  quotename(colz.[name]) + ',' + ' ' COLLATE database_default
-
  FROM sys.index_columns IXCOLS
-
  INNER JOIN sys.columns colz
-
  ON IXCOLS.column_id = colz.column_id
-
  AND IXCOLS.[object_id] = colz.[object_id]
-
  WHERE IXCOLS.is_included_column = 0
-
  AND IDX.[object_id] = IXCOLS.[object_id]
-
  AND IDX.index_id = IXCOLS.index_id
-
  ORDER BY
-
  key_ordinal
-
  FOR XML PATH('')) AS index_columns_key,
-
  (SELECT
-
  quotename(colz.[name]) + ',' + ' ' COLLATE database_default
-
  FROM sys.index_columns IXCOLS
-
  INNER JOIN sys.columns colz
-
  ON IXCOLS.column_id = colz.column_id
-
  AND IXCOLS.[object_id] = colz.[object_id]
-
  WHERE IXCOLS.is_included_column = 1
-
  AND IDX.[object_id] = IXCOLS.[object_id]
-
  AND IDX.index_id = IXCOLS.index_id
-
  ORDER BY
-
  index_column_id
-
  FOR XML PATH('')) AS index_columns_include) AS Index_Columns) AS Index_Columns)AllIndexes
 
---#################################################################################################
-
+/* --#################################################################################################
 --STEP_005 primary keys
-
---#################################################################################################
+--################################################################################################# */
 
 INSERT INTO #Results
 
@@ -905,11 +865,11 @@ WHERE is_primary_key = 1
 
  OR CHARINDEX(quotename(TBLZ.ColumnName) , quotename(IDXZ.index_columns_key) ) > 0 )
 
---#################################################################################################
+/* --#################################################################################################
 
 --STEP_006 unique indexes
 
---#################################################################################################
+--################################################################################################# */
 
 INSERT INTO #Results
 
@@ -963,11 +923,11 @@ WHERE IDXZ.is_primary_key = 0
 
  OR CHARINDEX(quotename(TBLZ.ColumnName) , quotename(IDXZ.index_columns_key) ) > 0 )
 
---#################################################################################################
+/* --#################################################################################################
 
 --STEP_007 regular indexes(also featuring includes or filtered indexes
 
---#################################################################################################
+--################################################################################################# */
 
 INSERT INTO #Results
 
@@ -1021,11 +981,11 @@ WHERE IDXZ.is_primary_key = 0
 
  OR CHARINDEX(quotename(TBLZ.ColumnName) , quotename(IDXZ.index_columns_key) ) > 0 )
 
---#################################################################################################
+/* --#################################################################################################
 
 --STEP_008 Column Collation definitions
 
---################################################################################################# 
+--################################################################################################# */
 
 INSERT INTO #Results
 
@@ -1049,7 +1009,7 @@ SELECT DISTINCT 80 AS ExecutionOrder,
   WHEN colz.[max_length] = -1
   THEN '(max)' + SPACE(6 - LEN(CONVERT(VARCHAR, colz.[max_length]))) + SPACE(7) + SPACE(16 - LEN(TYPE_NAME(colz.[user_type_id])))
 
- ----collate to comment out when not desired
+ /*----collate to comment out when not desired */
 
  + CASE
   WHEN colz.collation_name IS NULL THEN ''
@@ -1063,7 +1023,7 @@ SELECT DISTINCT 80 AS ExecutionOrder,
 
  ELSE '(' + CONVERT(VARCHAR, colz.[max_length] ) + ') ' + SPACE(6 - LEN(CONVERT(VARCHAR, colz.[max_length]))) + SPACE(7) + SPACE(16 - LEN(TYPE_NAME(colz.[user_type_id])))
 
- ----collate to comment out when not desired
+ /* ----collate to comment out when not desired */
 
  + CASE
   WHEN colz.collation_name IS NULL THEN ''
@@ -1139,15 +1099,12 @@ WHERE objz.type = 'U'
 
  AND TYPE_NAME(colz.[user_type_id]) IN ( 'char', 'varchar', 'nchar', 'nvarchar' )
 
---#################################################################################################
-
+/* --#################################################################################################
 --STEP_009 refresh dependent views, procs and functions
-
 -- refresh them in dependancy order in a single pass.
+--################################################################################################# */
 
---#################################################################################################
-
---if there was nothing with the wrong collation, there's no need to refresh:
+*/ --if there was nothing with the wrong collation, there's no need to refresh: */
 
 IF (SELECT
 
@@ -1250,7 +1207,7 @@ ORDER BY
  ID
 
 /*--#################################################################################################
--- uncomment the cursor c1 below to actually run the commands
+-- uncomment the cursor c1 below to actually run the commands or just copy the commands from Result 
 -- don't run this cursor unless you are 100% sure of the scripts.
 -- take a backup of the database and TEST TEST TEST!
 --################################################################################################# */
