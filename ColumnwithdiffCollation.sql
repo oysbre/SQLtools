@@ -1,10 +1,9 @@
 /* list columns using other collation than the database */
 SELECT 
-    t.Name 'Table Name',
-    c.name 'Column Name',
-    ty.name 'Type Name',
-    c.collation_name,
-    c.is_nullable
+    t.Name AS [Tablename],
+    c.name AS [ColumnName],
+    ty.name AS [TypeNam]e,
+    c.collation_name AS [Collation]
 FROM 
     sys.columns c 
 INNER JOIN 
@@ -12,6 +11,5 @@ INNER JOIN
 INNER JOIN 
     sys.types ty ON c.system_type_id = ty.system_type_id    
 WHERE 
-    t.is_ms_shipped = 0 AND ty.name <> 'sysname'
-    AND  EXISTS (select 1 from sys.databases d  where d.collation_name <> c.collation_name)
+    t.is_ms_shipped = 0 AND ty.name <> 'sysname'   AND  c.collation_name <> 'SQL_Latin1_General_CP1_CI_AS')
 	
