@@ -2,7 +2,7 @@
 SELECT 
     t.Name AS [Tablename],
     c.name AS [ColumnName],
-    ty.name AS [TypeNam]e,
+    ty.name AS [TypeName],
     c.collation_name AS [Collation]
 FROM 
     sys.columns c 
