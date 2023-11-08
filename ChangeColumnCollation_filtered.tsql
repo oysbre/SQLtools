@@ -88,7 +88,7 @@ WHERE colz.collation_name IS NOT NULL
  AND colz.collation_name <> @NewCollation
 
 	/* -- filter on Tablename if needed */
- AND objz.name like 'CUSTCOLLECTION%'
+ AND objz.name like 'CUSTCOLLECTIONLETTER%'
  ;
 
 /*--#################################################################################################
