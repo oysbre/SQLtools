@@ -1,30 +1,52 @@
 /*--#################################################################################################
 -- Get a list of Columns that are not using the same collation as the database with commands to change them sorted in right order.
--- This script only list print out commands and don't actually run them! The --exec(@isql) in the end of the script that run the scriptcommands, are commented out.
--- Always take a backup of the database first or run the script on a backup. TEST!
--- Because of a reference to 'sys.sql_expression_dependencies', this is valid only for SQL2008 and above.
+-- This script list commands and run them! Comment out exec(@isql) at line 1217 in the cursor at the end of the script to just see the commands.
+-- always take a backup of the database first or run the script on a backup
+-- because of a reference to 'sys.sql_expression_dependencies', this is valid only for SQL2008 and above.
 
 --simple constraints
 --STEP_00x Fulltext search
 --STEP_001 check constraints
 --STEP_002 default constraints
 --STEP_003 calculated column definitions
---STEP_004 foreign key constraints complex constraints and indexes (unique/pk/regular/includes/filtered indexes)
+--STEP_004 foreign key constraints
+--complex constraints and indexes (unique/pk/regular/includes/filtered indexes)
 --STEP_005 primary keys
 --STEP_006 unique indexes
---STEP_007 regular indexes(also featuring includes or filtered indexes) columns themselves
---STEP_008 Column Collation definitions views that reference any of the object tables
+--STEP_007 regular indexes(also featuring includes or filtered indexes)
+--columns themselves
+--STEP_008 Column Collation definitions
+--views that reference any of the object tables
 --STEP_009 refresh dependent views, procs and functions
+
+--Version 1.01 changes:
+--2016-03-07 added improvements related to Igor Micev sggestions found here:
+-- http://www.sqlservercentral.com/Forums/Topic1767151-566-1.aspx
+-- 1.fixed size of #Results table allowed truncation.
+-- 2.column names in indexes and includes are now quotenamed; logic that made assumptions on column name plus comma change dto be the quotenamed column instead.
+-- 3.fixed the nvarchar columns being doubled in size issue.
+-- 4.fixed some minor whitespace issues for aliases like AS Column name and the space before "Unique" when building constraints
+-- 5.moved logic for dropping temp table to the top so they can be interrogated more easily
+
+--Version 1.02 Changes
+--fixed case sensitive issues found by mister.magoo http://www.sqlservercentral.com/Forums/FindPost1767225.aspx
+-- 1.OBJECT_ID was wrong case lines 330,336
+-- 2.ROWS had wrong case line 332
+-- 3.sp_msdependencies had wrong case line 573
+--added enhancements found by Outback http://www.sqlservercentral.com/Forums/FindPost1768453.aspx
+-- 1. Foreign keys did not have ON DELETE/ON UPDATE options.
+-- 2. Added not for replication for FK as well
+-- 3. Index Creation was incorrect for unique/clustered items that were not contraints. */
 
 /*--#################################################################################################
 --Declare and assign collation variable as the same as Database collation
 --#################################################################################################*/
 
-DECLARE @NewCollation VARCHAR(128) = CONVERT(varchar,(SELECT DATABASEPROPERTYEX(db_name(),'Collation'))) /*  --'SQL_Latin1_General_CP1_CI_AS' or change this to the collation that you need */
+DECLARE @NewCollation VARCHAR(128) = CONVERT(varchar,(SELECT DATABASEPROPERTYEX(db_name(),'Collation'))) /*  --'Latin1_General_CI_AS'; --'SQL_Latin1_General_CP1_CI_AS' or change this to the collation that you need */
 
 IF OBJECT_ID(N'tempdb..#Results') IS NOT NULL
 BEGIN
- DROP TABLE #Results
+DROP TABLE #Results
 END
 
 CREATE TABLE #Results
@@ -54,7 +76,7 @@ END
 
 CREATE TABLE #MyAffectedTables
 (
-[Tid] INT IDENTITY (1,1) NOT NULL PRIMARY KEY, 
+[Tid] INT  IDENTITY (1,1) NOT NULL PRIMARY KEY, 
 [object_id] INT,
 SchemaName varchar(255),
 TableName nvarchar(4000),
@@ -80,12 +102,12 @@ WHERE colz.collation_name IS NOT NULL
  AND objz.is_ms_shipped = 0
  AND colz.is_computed = 0
  AND colz.collation_name <> @NewCollation
- 
-/* -- filter on Tablename if needed */
+
+	/* -- filter on Tablename if needed */
  --AND objz.name like 'CUSTCOLL%'
  ;
 
- /* check results in temptables */
+ /* check tables */
  --select * from #MyAffectedTables tabz
 
 /*--#################################################################################################
@@ -1085,6 +1107,7 @@ WHERE objz.type = 'U'
 -- refresh them in dependancy order in a single pass.
 --################################################################################################# */
 
+/* --if there was nothing with the wrong collation, there's no need to refresh: */
 
 IF OBJECT_ID(N'tempdb..#MyObjectHierarchy') IS NOT NULL
 BEGIN
@@ -1104,7 +1127,8 @@ objecttype varchar(255)
 
  )
 
---our list of objects in dependancy order
+
+ --our list of objects in dependancy order
  
 declare @RowNums int, @RowIds INT, @tabzschema varchar(5),@tabztable nvarchar(255),@tabzobject nvarchar(255)
 
@@ -1170,10 +1194,12 @@ ORDER BY
  ID
  */
 /*--#################################################################################################
--- uncomment the --exec(@isql) in cursor c1  below to actually run the commands or just copy the commands from Message 
+-- uncomment the cursor c1 below to actually run the commands or just copy the commands from Result 
 -- don't run this cursor unless you are 100% sure of the scripts.
 -- take a backup of the database and TEST TEST TEST!
 --################################################################################################# */
+
+
 
 DECLARE @isql nvarchar(max)
 DECLARE c1 CURSOR LOCAL FORWARD_ONLY STATIC READ_ONLY for
@@ -1188,7 +1214,7 @@ SELECT Command
  While @@fetch_status <> -1
 BEGIN
  print @isql
---exec(@isql)
+exec(@isql)
  fetch next from c1 into @isql
 END
  close c1
