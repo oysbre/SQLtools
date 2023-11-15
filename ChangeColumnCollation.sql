@@ -1,7 +1,7 @@
 /*--#################################################################################################
--- This script only list out commands and don't actually run them. The cursor in the end of the script that run the scriptcommands are commented out.
--- always take a backup of the database first or run the script on a backup
--- because of a reference to 'sys.sql_expression_dependencies', this is valid only for SQL2008 and above.
+-- This script only list out commands and don't actually run them. The --exec(@isql) in the end of the script that run the scriptcommands, are commented out.
+-- Always take a backup of the database first or run the script on a backup
+-- Because of a reference to 'sys.sql_expression_dependencies', this is valid only for SQL2008 and above.
 
 --simple constraints
 --STEP_00x Fulltext search
@@ -43,13 +43,18 @@
 
 DECLARE @NewCollation VARCHAR(128) = CONVERT(varchar,(SELECT DATABASEPROPERTYEX(db_name(),'Collation'))) /*  --'Latin1_General_CI_AS'; --'SQL_Latin1_General_CP1_CI_AS' or change this to the collation that you need */
 
-IF OBJECT_ID('tempdb.[dbo].[#Results]') IS NOT NULL
-DROP TABLE [dbo].[#Results];
+IF OBJECT_ID(N'tempdb..#Results') IS NOT NULL
+BEGIN
+DROP TABLE #Results
+END
 
-CREATE TABLE [dbo].[#Results] (
+CREATE TABLE #Results
+(
 [ID] INT IDENTITY(1,1) NOT NULL PRIMARY KEY,
 [ExecutionOrder] INT NOT NULL,
-[Command] NVARCHAR(max) NULL);
+[Command] NVARCHAR(max) NULL
+)
+
 
 INSERT INTO #Results
 
@@ -63,9 +68,23 @@ SELECT 0 AS ExecutionOrder, '--Suite of commands to change collation of all colu
 
 --#################################################################################################*/
 
-IF (SELECT OBJECT_ID('Tempdb.dbo.#MyAffectedTables')) IS NOT NULL
- DROP TABLE #MyAffectedTables;
+IF OBJECT_ID(N'tempdb..#MyAffectedTables') IS NOT NULL
+BEGIN
+ DROP TABLE #MyAffectedTables
+END
 
+CREATE TABLE #MyAffectedTables
+(
+[Tid] INT IDENTITY (1,1) NOT NULL PRIMARY KEY, 
+[object_id] INT,
+SchemaName varchar(255),
+TableName nvarchar(4000),
+ColumnName nvarchar(4000),
+name nvarchar(4000),
+column_id INT
+)
+
+INSERT INTO #MyAffectedTables
 SELECT
 
 	objz.object_id,
@@ -74,10 +93,6 @@ SELECT
 	colz.name AS ColumnName,
 	colz.collation_name,
 	colz.column_id
-
-INTO
-
- #MyAffectedTables
 
 FROM sys.columns colz
  INNER JOIN sys.tables objz
@@ -90,6 +105,9 @@ WHERE colz.collation_name IS NOT NULL
 	/* -- filter on Tablename if needed */
  --AND objz.name like 'CUSTCOLL%'
  ;
+
+ /* check results in temptabls */
+ --select * from #MyAffectedTables tabz
 
 /*--#################################################################################################
 
@@ -105,7 +123,7 @@ SELECT
 
  9 AS ExecutionOrder,
 
- CONVERT(VARCHAR(8000), 'EXEC sp_fulltext_column ' + QUOTENAME(tabz.SchemaName) + '.' + QUOTENAME(tabz.TableName) + ' , ' + QUOTENAME(colz.name) + ' , DROP;') AS Command
+ CONVERT(VARCHAR(8000), 'EXEC sp_fulltext_column @tabname = ''' + tabz.SchemaName + '.' + tabz.TableName + ''' , @colname = ''' + colz.name + ''' , @action = ' + '''DROP'''+ ';') AS Command
 
 FROM 
     sys.tables objz
@@ -148,7 +166,7 @@ SELECT
 
  899 AS ExecutionOrder,
 
- CONVERT(VARCHAR(8000), 'EXEC sp_fulltext_column ' + QUOTENAME(tabz.SchemaName) + '.' + QUOTENAME(tabz.TableName) + ' , ' + QUOTENAME(colz.name) + ' , ADD;') AS Command
+ CONVERT(VARCHAR(8000), 'EXEC sp_fulltext_column @tabname = ''' + tabz.SchemaName + '.' + tabz.TableName + ''' , @colname = ''' + colz.name + ''' , @action = ' + '''ADD'''+ ';') AS Command
 
 FROM 
     sys.tables objz
@@ -1090,60 +1108,44 @@ WHERE objz.type = 'U'
 
 /* --if there was nothing with the wrong collation, there's no need to refresh: */
 
-IF (SELECT
-
- OBJECT_ID('Tempdb.dbo.#MyObjectHierarchy')) IS NOT NULL
-
+IF OBJECT_ID(N'tempdb..#MyObjectHierarchy') IS NOT NULL
+BEGIN
  DROP TABLE #MyObjectHierarchy 
+ END
 
 IF EXISTS(SELECT * FROM #Results WHERE ExecutionOrder > 0)
 
  BEGIN
 
  CREATE TABLE #MyObjectHierarchy
-
  (
 
- HID int identity(1,1) not null primary key,
-
- ObjectId int,
-
- TYPE int,OBJECTTYPE AS CASE
-
- WHEN TYPE = 1 THEN 'FUNCTION'
-
- WHEN TYPE = 4 THEN 'VIEW'
-
- WHEN TYPE = 8 THEN 'TABLE'
-
- WHEN TYPE = 16 THEN 'PROCEDURE'
-
- WHEN TYPE =128 THEN 'RULE'
-
- ELSE ''
-
- END,
-
- ONAME varchar(255),
-
- OOWNER varchar(255),
-
- SEQ int
+HID int identity(1,1) not null primary key,
+NAME varchar(255),
+objecttype varchar(255)
 
  )
 
+
  --our list of objects in dependancy order
+ 
+declare @RowNums int, @RowIds INT, @tabzschema varchar(5),@tabztable nvarchar(255),@tabzobject nvarchar(255)
 
- INSERT #MyObjectHierarchy (TYPE,ONAME,OOWNER,SEQ)
-
--- use this if inside a stored procedure
-
--- EXEC sp_MSdependencies @intrans = 1
-
---else
-
- EXEC sp_MSdependencies 
-
+SELECT @RowIds=MAX(tabz.Tid) FROM #MyAffectedTables tabz     --start with the highest ID
+SELECT @RowNums = Count(*) From #MyAffectedTables tabz    --get total number of records
+WHILE @RowNums > 0                          --loop until no more records
+BEGIN   
+    SELECT @tabzschema = tabz.SchemaName FROM #MyAffectedTables tabz where tabz.Tid = @RowIds 
+	SELECT @tabztable = tabz.TableName FROM #MyAffectedTables tabz where tabz.Tid = @RowIds    
+	set @tabzobject = N''+@tabzschema + '.' + @tabztable+''
+	IF EXISTS(SELECT top 1 * FROM sys.sql_expression_dependencies WHERE referenced_id = OBJECT_ID(N''+ QUOTENAME(@tabzschema) + '.' + QUOTENAME(@tabztable)+'')) -- outputcheck of dependicies
+	BEGIN
+		INSERT INTO #MyObjectHierarchy (name,objecttype)
+		EXEC sp_depends @objname = @tabzobject
+	END
+	select top 1 @RowIds=tabz.Tid from #MyAffectedTables tabz where tabz.Tid < @RowIds order by tabz.Tid desc--get the next one
+    set @RowNums = @RowNums - 1                          --decrease count
+END
 INSERT INTO #Results
 
  (ExecutionOrder,Command)
@@ -1156,11 +1158,11 @@ SELECT
 
  WHEN OBJECTTYPE = 'VIEW'
 
- THEN 'EXEC sp_refreshview ''' + QUOTENAME(OOWNER) + '.' + QUOTENAME(ONAME) + ''';'
+ THEN 'EXEC sp_refreshview ' + QUOTENAME(name) +';'
 
  WHEN OBJECTTYPE IN ('FUNCTION' ,'PROCEDURE')
 
- THEN 'EXEC sp_recompile ''' + QUOTENAME(OOWNER) + '.' + QUOTENAME(ONAME) + ''';'
+ THEN 'EXEC sp_recompile ' + QUOTENAME(name) +  ';'
 
  END
 
@@ -1171,7 +1173,7 @@ WHERE OBJECTTYPE IN('FUNCTION','VIEW','PROCEDURE')
 ORDER BY HID
 
  END --Exists 
-
+ /*
 --#################################################################################################
 
 --Final Presentation
@@ -1189,16 +1191,16 @@ ORDER BY
  ExecutionOrder,
 
  ID
-
+ */
 /*--#################################################################################################
 -- uncomment the cursor c1 below to actually run the commands or just copy the commands from Result 
 -- don't run this cursor unless you are 100% sure of the scripts.
 -- take a backup of the database and TEST TEST TEST!
 --################################################################################################# */
 
-/*
 
-DECLARE @isql varchar(max)
+
+DECLARE @isql nvarchar(max)
 DECLARE c1 CURSOR LOCAL FORWARD_ONLY STATIC READ_ONLY for
 SELECT Command
  FROM #Results
@@ -1211,10 +1213,10 @@ SELECT Command
  While @@fetch_status <> -1
 BEGIN
  print @isql
- exec(@isql)
+--exec(@isql)
  fetch next from c1 into @isql
 END
  close c1
  deallocate c1
- */
+
  
