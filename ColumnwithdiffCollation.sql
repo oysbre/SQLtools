@@ -1,4 +1,4 @@
-/* list columns in tables that are using other collation than the database */
+/* list columns in tables that are using other collation than default Microsoft collation "SQL_Latin1_General_CP1_CI_AS" */
 SELECT 
     t.Name 'Table Name',
     c.name 'Column Name',
