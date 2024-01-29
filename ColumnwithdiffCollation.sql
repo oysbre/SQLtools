@@ -16,5 +16,6 @@ INNER JOIN
 WHERE 
     t.is_ms_shipped = 0	
     AND ty.name <> 'sysname'
-    AND c.collation_name <> 'SQL_Latin1_General_CP1_CI_AS'
+   AND (c.collation_name <> 'SQL_Latin1_General_CP1_CI_AS' )
+	AND (c.collation_name <> 'Latin1_General_BIN')
 	
