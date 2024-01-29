@@ -1,9 +1,12 @@
-/* list columns in tables that are using other collation than the database default */
+/* list columns in tables that are using other collation than the database */
 SELECT 
-    t.Name AS [Tablename],
-    c.name AS [ColumnName],
-    ty.name AS [TypeName],
-    c.collation_name AS [Collation]
+    t.Name 'Table Name',
+    c.name 'Column Name',
+    ty.name 'Type Name',
+    c.collation_name,
+    c.is_nullable,
+  CASE WHEN c.collation_name <> 'SQL_Latin1_General_CP1_CI_AS' THEN 'Column must convert to collation "SQL_Latin1_General_CP1_CI_AS"'  
+  END AS Action
 FROM 
     sys.columns c 
 INNER JOIN 
@@ -11,5 +14,7 @@ INNER JOIN
 INNER JOIN 
     sys.types ty ON c.system_type_id = ty.system_type_id    
 WHERE 
-    t.is_ms_shipped = 0 AND ty.name <> 'sysname'   AND  c.collation_name <> 'SQL_Latin1_General_CP1_CI_AS'
+    t.is_ms_shipped = 0	
+    AND ty.name <> 'sysname'
+    AND c.collation_name <> 'SQL_Latin1_General_CP1_CI_AS'
 	
