@@ -42,7 +42,7 @@
 --Declare and assign collation variable as the same as Database collation
 --#################################################################################################*/
 
-DECLARE @NewCollation VARCHAR(128) = CONVERT(varchar,(SELECT DATABASEPROPERTYEX(db_name(),'Collation'))) /*  --'Latin1_General_CI_AS'; --'SQL_Latin1_General_CP1_CI_AS' or change this to the collation that you need */
+DECLARE @NewCollation VARCHAR(128) = 'SQL_Latin1_General_CP1_CI_AS' /* CONVERT(varchar,(SELECT DATABASEPROPERTYEX(db_name(),'Collation')))  change this to the collation as the database that you need */
 
 IF OBJECT_ID(N'tempdb..#Results') IS NOT NULL
 BEGIN
