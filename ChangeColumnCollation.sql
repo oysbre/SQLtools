@@ -42,7 +42,8 @@
 --Declare and assign collation variable as the same as Database collation
 --#################################################################################################*/
 
-DECLARE @NewCollation VARCHAR(128) = 'SQL_Latin1_General_CP1_CI_AS' /* CONVERT(varchar,(SELECT DATABASEPROPERTYEX(db_name(),'Collation')))  change this to the collation as the database that you need */
+DECLARE @OldCollation VARCHAR(128) = 'Danish_Norwegian_CI_AS' /* check existing columncollation and populate variable */
+DECLARE @NewCollation VARCHAR(128) = 'SQL_Latin1_General_CP1_CI_AS' /* change this to the collation as the database that you need. D365FO use SQL_Latin1_General_CP1_CI_AS as default.  */
 
 IF OBJECT_ID(N'tempdb..#Results') IS NOT NULL
 BEGIN
@@ -101,7 +102,7 @@ FROM sys.columns colz
 WHERE colz.collation_name IS NOT NULL
  AND objz.is_ms_shipped = 0
  AND colz.is_computed = 0
- AND colz.collation_name <> @NewCollation
+ AND colz.collation_name = @OldCollation
 
 	/* -- filter on Tablename if needed */
  --AND objz.name like 'CUSTCOLL%'
