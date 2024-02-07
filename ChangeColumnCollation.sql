@@ -43,7 +43,7 @@
 --#################################################################################################*/
 
 DECLARE @OldCollation VARCHAR(128) = 'Danish_Norwegian_CI_AS' /* check existing columncollation and populate variable */
-DECLARE @NewCollation VARCHAR(128) = 'SQL_Latin1_General_CP1_CI_AS' /* change this to the collation as the database that you need. D365FO use SQL_Latin1_General_CP1_CI_AS as default.  */
+DECLARE @NewCollation VARCHAR(128) = 'SQL_Latin1_General_CP1_CI_AS' /* change this to the collation to the same as the database. D365FO use SQL_Latin1_General_CP1_CI_AS as default.  */
 
 IF OBJECT_ID(N'tempdb..#Results') IS NOT NULL
 BEGIN
@@ -158,7 +158,7 @@ ON tabz.object_id = colz.object_id
 WHERE objz.type = 'U'
 
 
-/*--add the Columns back for FullText Search */
+/* add the Columns back for FullText Search */
 
 INSERT INTO #Results
 
@@ -202,7 +202,7 @@ WHERE objz.type = 'U'
 
 /*--#################################################################################################
 
---STEP_001 check constriants
+--STEP_001 check constraints
 
 --#################################################################################################*/
 
@@ -224,7 +224,7 @@ FROM sys.check_constraints conz
 
  AND conz.parent_column_id = tabz.column_id;
 
---add the recreation of the constraints.
+/* add the recreation of the constraints. */
 
 INSERT INTO #Results
 
@@ -282,6 +282,8 @@ FROM sys.default_constraints conz
 
  AND conz.parent_column_id = tabz.column_id;
 
+/* add contraints */
+
 INSERT INTO #Results
 
  (ExecutionOrder,Command)
@@ -330,7 +332,7 @@ FROM sys.columns colz
 
  AND colz.[column_id] = CALC.[column_id]
 
- --only calculations referencing columns
+ /* only calculations referencing columns */
 
  LEFT OUTER JOIN sys.sql_expression_dependencies depz
 
@@ -345,6 +347,8 @@ FROM sys.columns colz
  AND depz.referenced_minor_id = tabz.column_id
 
 WHERE colz.is_computed = 1;
+
+/* add calculated columns */
 
 INSERT INTO #Results
 
@@ -397,7 +401,7 @@ FROM sys.columns colz
 WHERE colz.is_computed = 1;
 
 /* --#################################################################################################
---STEP_004 foreign key constriants :child references
+--STEP_004 foreign key constraints :child references
 --################################################################################################# */
 
 /* --visualize the data  it is very rare to have a char column as the value for a FK */
@@ -428,9 +432,7 @@ WHERE tabz.object_id = colz.parent_object_id
 
  AND tabz.column_id = colz.parent_column_id;
 
---foreign keys, potentially, can span multiple keys;
-
---'scriptlet to do all FK's for reference.
+/* foreign keys, potentially, can span multiple keys; 'scriptlet to do all FK's for reference. */
 
 INSERT INTO #Results
 
@@ -440,7 +442,7 @@ SELECT
 
  DISTINCT
 
- --FK must be added AFTER the PK/unique constraints are added back.
+ /* FK must be added AFTER the PK/unique constraints are added back. */
 
  850 AS ExecutionOrder,
 
@@ -618,14 +620,12 @@ conz.parent_object_id,--- without GROUP BY multiple rows are returned
 
 /*pre-quel sequel to gather the data:*/
 
-IF (SELECT
-
- OBJECT_ID('Tempdb.dbo.#Indexes')) IS NOT NULL
-
+IF (SELECT OBJECT_ID('Tempdb.dbo.#Indexes')) IS NOT NULL
+BEGIN
  DROP TABLE #Indexes;
-
+END
+	
 SELECT
-
  CASE
 
  WHEN is_primary_key = 1
@@ -845,6 +845,8 @@ WHERE is_primary_key = 1
 
  OR CHARINDEX(quotename(TBLZ.ColumnName) , quotename(IDXZ.index_columns_key) ) > 0 )
 
+/* add PK */
+	
 INSERT INTO #Results
 
  (ExecutionOrder,Command)
@@ -901,6 +903,8 @@ WHERE IDXZ.is_primary_key = 0
 
  OR CHARINDEX(quotename(TBLZ.ColumnName) , quotename(IDXZ.index_columns_key) ) > 0 )
 
+/* add unique idx */
+	
 INSERT INTO #Results
 
  (ExecutionOrder,Command)
@@ -959,6 +963,8 @@ WHERE IDXZ.is_primary_key = 0
 
  OR CHARINDEX(quotename(TBLZ.ColumnName) , quotename(IDXZ.index_columns_key) ) > 0 )
 
+/* add indexes */
+	
 INSERT INTO #Results
 
  (ExecutionOrder,Command)
@@ -1051,7 +1057,7 @@ SELECT DISTINCT 80 AS ExecutionOrder,
 
  THEN '(max)' + SPACE(6 - LEN(CONVERT(VARCHAR, (colz.[max_length] / 2)))) + SPACE(7) + SPACE(16 - LEN(TYPE_NAME(colz.[user_type_id])))
 
- ----collate to comment out when not desired
+ /* collate to comment out when not desired */
 
  + CASE
 
@@ -1128,8 +1134,7 @@ objecttype varchar(255)
 
  )
 
-
- --our list of objects in dependancy order
+/* our list of objects in dependancy order */
  
 declare @RowNums int, @RowIds INT, @tabzschema varchar(5),@tabztable nvarchar(255),@tabzobject nvarchar(255)
 
