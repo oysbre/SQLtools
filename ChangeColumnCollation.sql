@@ -1,6 +1,6 @@
 /*--#################################################################################################
 -- Get a list of Columns that are not using the same collation as the database with commands to change them sorted in right order.
--- This script list commands and run them! Comment out exec(@isql) at line 1218 in the cursor at the end of the script to just see the commands.
+-- This script list commands and run them! Comment out exec(@isql) at line 1223 in the cursor at the end of the script to just output the commands to the console.
 -- always take a backup of the database first or run the script on a backup
 -- because of a reference to 'sys.sql_expression_dependencies', this is valid only for SQL2008 and above.
 
