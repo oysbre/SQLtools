@@ -41,7 +41,7 @@
 /*--#################################################################################################
 --Declare and assign collation variable as the same as Database collation
 --#################################################################################################*/
-
+set nocount on;
 DECLARE @OldCollation VARCHAR(128) = 'Danish_Norwegian_CI_AS' /* check existing columncollation and populate variable */
 DECLARE @NewCollation VARCHAR(128) = 'SQL_Latin1_General_CP1_CI_AS' /* change this to the collation to the same as the database. D365FO use SQL_Latin1_General_CP1_CI_AS as default.  */
 
@@ -1219,7 +1219,7 @@ SELECT Command
  fetch next from c1 into @isql
  While @@fetch_status <> -1
 BEGIN
- print @isql
+ --print @isql
 exec(@isql)
  fetch next from c1 into @isql
 END
