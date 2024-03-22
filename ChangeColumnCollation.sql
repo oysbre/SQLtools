@@ -1,10 +1,9 @@
 /*--#################################################################################################
 -- Get a list of Columns that are not using the same collation as the database with commands to change them sorted in right order.
--- This script list commands and run them! Comment out exec(@isql) at line 1223 in the cursor at the end of the script to just output the commands to the console.
--- always take a backup of the database first or run the script on a backup
+-- Always take a backup of the database first or run the script on a backup
+-- The script only generate and list commands. Comment in "exec(@isql)" at line 1203 in the cursor at the end of the script to actually do the change.
 -- because of a reference to 'sys.sql_expression_dependencies', this is valid only for SQL2008 and above.
 
---simple constraints
 --STEP_00x Fulltext search
 --STEP_001 check constraints
 --STEP_002 default constraints
@@ -18,25 +17,6 @@
 --STEP_008 Column Collation definitions
 --views that reference any of the object tables
 --STEP_009 refresh dependent views, procs and functions
-
---Version 1.01 changes:
---2016-03-07 added improvements related to Igor Micev sggestions found here:
--- http://www.sqlservercentral.com/Forums/Topic1767151-566-1.aspx
--- 1.fixed size of #Results table allowed truncation.
--- 2.column names in indexes and includes are now quotenamed; logic that made assumptions on column name plus comma change dto be the quotenamed column instead.
--- 3.fixed the nvarchar columns being doubled in size issue.
--- 4.fixed some minor whitespace issues for aliases like AS Column name and the space before "Unique" when building constraints
--- 5.moved logic for dropping temp table to the top so they can be interrogated more easily
-
---Version 1.02 Changes
---fixed case sensitive issues found by mister.magoo http://www.sqlservercentral.com/Forums/FindPost1767225.aspx
--- 1.OBJECT_ID was wrong case lines 330,336
--- 2.ROWS had wrong case line 332
--- 3.sp_msdependencies had wrong case line 573
---added enhancements found by Outback http://www.sqlservercentral.com/Forums/FindPost1768453.aspx
--- 1. Foreign keys did not have ON DELETE/ON UPDATE options.
--- 2. Added not for replication for FK as well
--- 3. Index Creation was incorrect for unique/clustered items that were not contraints. */
 
 /*--#################################################################################################
 --Declare and assign collation variable as the same as Database collation
@@ -1219,11 +1199,10 @@ SELECT Command
  fetch next from c1 into @isql
  While @@fetch_status <> -1
 BEGIN
- --print @isql
-exec(@isql)
+ print @isql
+ /* exec(@isql) */
  fetch next from c1 into @isql
 END
  close c1
  deallocate c1
-
- 
+/ * TSQL END */
