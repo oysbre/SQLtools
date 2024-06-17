@@ -1,4 +1,5 @@
 /* Identify queries that has high variations of read/cpu time as a sign of parameter sniffing issue */
+/* check dataskew in tables that are involved in the query. create a planguide as an emergency fix */ 
 WITH Execution_Detail AS (
 SELECT DB_NAME(CONVERT(int, qpa.value)) AS [Database Name],
 SUBSTRING(ST.text, (QS.statement_start_offset / 2) + 1, ((CASE statement_end_offset
