@@ -1,5 +1,5 @@
-/* find plans with Index Spool. To search in a specific database, filter on DBID in pa.value*/
-/* crate non-clustered index to avoid the spool. seek predicate = key in index and output column in includes */
+/* find plans with Index Spool. To search in a specific database, filter on DBID in pa.value in line 24*/
+/* create non-clustered index to avoid the spool. seek predicate = key in index and output column in includes */
 ;WITH 
     XMLNAMESPACES 
 ('http://schemas.microsoft.com/sqlserver/2004/07/showplan' AS x),
