@@ -11,12 +11,13 @@ SUBSTRING(ST.text, (QS.statement_start_offset / 2) + 1, ((CASE statement_end_off
         qs.execution_count,
         qp.query_plan,
 	    TRY_CONVERT(XML,SUBSTRING(etqp.query_plan,CHARINDEX('<ParameterList>',etqp.query_plan), CHARINDEX('</ParameterList>',etqp.query_plan) + LEN('</ParameterList>') - CHARINDEX('<ParameterList>',etqp.query_plan) )) AS Parameters,
-		min_worker_time,
-		max_worker_time,
+		qs.min_worker_time /1000. as min_wrk_time_ms,
+		qs.max_worker_time /1000. as max_wrk_time_ms,
         ISNULL((max_worker_time - min_worker_time) / NULLIF(min_worker_time, 0), 0) AS LogicalCpuRatio, 
-        min_logical_reads,max_logical_reads,
+        qs.min_logical_reads,qs.max_logical_reads,
         ISNULL((max_logical_reads - min_logical_reads) / NULLIF(min_logical_reads, 0), 0) AS LogicalReadsDevRatio,
-        min_elapsed_time,max_elapsed_time, 
+        cast(qs.min_elapsed_time/10000000. as decimal(6, 4))as min_elap_s,
+		cast(qs.max_elapsed_time/10000000. as decimal(6, 4))as max_elap_s, 
         ISNULL((max_elapsed_time - min_elapsed_time) / NULLIF(min_elapsed_time, 0), 0) AS LogicalElapsedTimDevRatio
 FROM sys.dm_exec_query_stats AS QS
 CROSS APPLY sys.dm_exec_sql_text(QS.sql_handle) AS ST
