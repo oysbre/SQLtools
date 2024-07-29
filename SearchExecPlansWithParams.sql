@@ -1,6 +1,6 @@
 /* Get top 25 executionplans in SQL plancache with their parameters */
 
-SELECT TOP 25
+SELECT TOP 10
  DB_NAME(qp.dbid) AS [Database Name]
 ,SUBSTRING(qt.TEXT, (qs.statement_start_offset/2)+1,
 ((CASE qs.statement_end_offset
@@ -23,9 +23,9 @@ CROSS APPLY sys.dm_exec_sql_text(qs.sql_handle) qt
 CROSS APPLY sys.dm_exec_query_plan(qs.plan_handle) qp
 CROSS APPLY sys.dm_exec_text_query_plan(qs.plan_handle, qs.statement_start_offset, qs.statement_end_offset) etqp
 
-where qt.text like '%SELECT%' COLLATE SQL_Latin1_General_CP1_CS_AS
+where qt.text like '%SELECT%' --COLLATE SQL_Latin1_General_CP1_CS_AS
 --and qt.text like '%fast 1%'
---and qt.text like '%salesline%'
+and qt.text like '%INVENTDIM%'
 --and last_logical_reads > 100000
 --and qs.last_elapsed_time/1000000 > 400
 --and execution_count >  3
