@@ -1,11 +1,10 @@
 /* Find queries with parametersniffing issues in plancache. Queries with high CPU workertime difference indicate this .
-Run this DMV query on the database in question
-Filter on querytext as needed */
+Run this DMV query on the database in question */
 SELECT TOP (10) ds.execution_count,
-       ds.min_worker_time / 1000. AS min_worker_time_ms,
-       ds.max_worker_time / 1000. AS max_worker_time_ms,
-       ds.min_elapsed_time / 1000. AS min_elapsed_time_ms,
-       ds.max_elapsed_time / 1000. AS max_elapsed_time_ms,
+       CAST(ds.min_worker_time / 1000. as numeric) AS min_worker_time_ms,
+       CAST(ds.max_worker_time / 1000. as numeric)AS max_worker_time_ms,
+       CAST(ds.min_elapsed_time / 1000. as numeric)AS min_elapsed_time_ms,
+       CAST(ds.max_elapsed_time / 1000. as numeric)AS max_elapsed_time_ms,
        ds.min_logical_reads,
        ds.max_logical_reads,
        ds.min_rows,
