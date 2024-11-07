@@ -21,7 +21,7 @@
                    1/0
                FROM sys.dm_exec_plan_attributes(decp.plan_handle) AS pa 
                WHERE pa.attribute = 'dbid'
-               AND   pa.value = >4
+               AND   pa.value > 4
            )   
     GROUP BY deqs.query_plan_hash
     ORDER BY sort DESC
