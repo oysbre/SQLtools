@@ -9,5 +9,5 @@ EXEC sp_create_plan_guide @name = N'[AX_InventItemPriceDimSite]',
 @hints = NULL
 --@hints = N'OPTION (FORCE ORDER)'
 --@hints = N'OPTION (RECOMPILE)'
---@hints = N'OPTION (OPTIMIZE FOR(@P1=N''))'
+--@hints = N'OPTION (OPTIMIZE FOR(@P1=N''VALUE''))'
 GO
