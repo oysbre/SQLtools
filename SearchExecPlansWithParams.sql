@@ -1,4 +1,4 @@
-/* Get top 25 executionplans in SQL plancache with their parameters */
+/* Get top 10 executionplans in SQL plancache with their parameters */
 
 SELECT TOP 10
  DB_NAME(qp.dbid) AS [Database Name]
@@ -10,7 +10,7 @@ END - qs.statement_start_offset)/2)+1) AS sqlquery,
 qs.execution_count,
 qs.min_logical_reads, qs.max_logical_reads,qs.last_logical_reads,
 qs.min_rows,qs.max_rows,
-qs.total_worker_time,qs.last_worker_time
+qs.min_worker_time/1000 as min_worker_time_ms,qs.max_worker_time/1000 as max_worker_time_ms, qs.last_worker_time/1000 as last_worker_time_ms
 ,CAST(qs.total_elapsed_time / 1000000.0 AS DECIMAL(28, 2)) AS [Total Duration (s)]
 ,CAST (qs.last_elapsed_time / 1000000.0 AS DECIMAL(28, 2)) AS [Last_elapsed_(s)]
 ,CAST(qs.total_worker_time * 100.0 / qs.total_elapsed_time AS DECIMAL(28, 2)) AS [% CPU]
@@ -29,7 +29,7 @@ where qt.text like '%SELECT%' COLLATE SQL_Latin1_General_CP1_CS_AS
 --and qt.text like '%FAST%'
 --and last_logical_reads > 100000
 --and qs.last_elapsed_time/1000000 > 400
-and execution_count >  1 
+--and execution_count >  1 
 --ORDER BY qs.total_logical_reads DESC -- logical reads
 -- ORDER BY qs.total_logical_writes DESC -- logical writes
 --ORDER BY execution_count DESC -- execution count
