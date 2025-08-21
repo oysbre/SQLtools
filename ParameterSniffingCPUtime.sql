@@ -16,14 +16,19 @@ SELECT TOP (10)
                        THEN DATALENGTH(st.text)  
                        ELSE ds.statement_end_offset  
                    END - ds.statement_start_offset) / 2) +1) AS SQLquery
-       ,dp.query_plan
+       /*,dp.query_plan
+	   ,REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(CAST(TRY_CONVERT(XML,SUBSTRING(etqp.query_plan,CHARINDEX('<ParameterList>',etqp.query_plan), CHARINDEX('</ParameterList>',etqp.query_plan) + LEN('</ParameterList>') - CHARINDEX('<ParameterList>',etqp.query_plan) )) AS NVARCHAR(MAX)),'<',''),'>',''),'"',''),'/',' '),'ParameterList',''),'ColumnReference Column=',''),'ParameterDataType=',''),'ParameterCompiledValue=','')  AS CompiledParameters
+	   */
+
 FROM sys.dm_exec_query_stats AS ds
 CROSS APPLY sys.dm_exec_sql_text(ds.plan_handle) AS st
 CROSS APPLY sys.dm_exec_query_plan(ds.plan_handle) AS dp
+CROSS APPLY sys.dm_exec_text_query_plan(ds.plan_handle, ds.statement_start_offset, ds.statement_end_offset) etqp
 WHERE st.dbid = DB_ID()
 AND ds.execution_count > 1
 AND (ds.min_worker_time / 1000000.) * 100. < (ds.max_worker_time / 1000000.)
 AND st.text like '%SELECT%'
+--AND st.text like '%INVENTDIM%'
 --AND st.text like '%FAST%'
 ORDER BY max_worker_time_ms DESC
 OPTION(RECOMPILE);
