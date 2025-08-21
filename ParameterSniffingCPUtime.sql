@@ -10,6 +10,7 @@ SELECT TOP (10)
        ,ds.max_logical_reads
        ,ds.min_rows
        ,ds.max_rows
+	   ,st.text
        ,SUBSTRING(st.text, (ds.statement_start_offset / 2) +1,   
                  ((CASE ds.statement_end_offset  
                        WHEN -1 
