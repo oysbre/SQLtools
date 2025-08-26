@@ -1,6 +1,6 @@
-/* Find queries with parametersniffing issues in plancache.
+/* Find queries with sign of parametersniffing issues in plancache.
 Queries with high CPU workertime and/or logicalreads difference between min and max indicate this.
-Check dataskew in related tables for parameters and their values used in query
+Check for dataskew in related tables in a query for their values used in parameters
 Create planguide if needed to force a "good plan" */
 SELECT TOP (10)
         ds.execution_count
