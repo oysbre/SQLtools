@@ -29,9 +29,10 @@ CROSS APPLY sys.dm_exec_query_plan(ds.plan_handle) AS dp
 CROSS APPLY sys.dm_exec_text_query_plan(ds.plan_handle, ds.statement_start_offset, ds.statement_end_offset) etqp
 WHERE st.dbid = DB_ID()
 AND ds.execution_count > 1
-AND (ds.min_worker_time / 1000000.) * 100. < (ds.max_worker_time / 1000000.)
-AND st.text like '%SELECT%' COLLATE SQL_Latin1_General_CP1_CS_AS
+AND (ds.min_worker_time / 1000000.) * 100. < (ds.max_worker_time / 1000000.) /* filter on workertime */
+AND st.text like '%SELECT%' COLLATE SQL_Latin1_General_CP1_CS_AS /* filter on SELECT case-sensitive */
 --AND st.text like '%INVENTDIM%'
 --AND st.text like '%FAST%'
+AND CAST(dp.query_plan AS nvarchar(max)) NOT LIKE ('%PlanGuideName%') /* exclude plans with existing planguide */
 ORDER BY max_worker_time_ms DESC
 OPTION(RECOMPILE);
