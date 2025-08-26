@@ -19,9 +19,9 @@ SELECT TOP (10)
                        THEN DATALENGTH(st.text)  
                        ELSE ds.statement_end_offset  
                    END - ds.statement_start_offset) / 2) +1) AS SQLquery
-       /*,dp.query_plan
-	   ,REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(CAST(TRY_CONVERT(XML,SUBSTRING(etqp.query_plan,CHARINDEX('<ParameterList>',etqp.query_plan), CHARINDEX('</ParameterList>',etqp.query_plan) + LEN('</ParameterList>') - CHARINDEX('<ParameterList>',etqp.query_plan) )) AS NVARCHAR(MAX)),'<',''),'>',''),'"',''),'/',' '),'ParameterList',''),'ColumnReference Column=',''),'ParameterDataType=',''),'ParameterCompiledValue=','')  AS CompiledParameters
-	   */
+       
+	   --,REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(CAST(TRY_CONVERT(XML,SUBSTRING(etqp.query_plan,CHARINDEX('<ParameterList>',etqp.query_plan), CHARINDEX('</ParameterList>',etqp.query_plan) + LEN('</ParameterList>') - CHARINDEX('<ParameterList>',etqp.query_plan) )) AS NVARCHAR(MAX)),'<',''),'>',''),'"',''),'/',' '),'ParameterList',''),'ColumnReference Column=',''),'ParameterDataType=',''),'ParameterCompiledValue=','')  AS CompiledParameters
+	   --,dp.query_plan /* uncomment to see the queryplan */
 
 FROM sys.dm_exec_query_stats AS ds
 CROSS APPLY sys.dm_exec_sql_text(ds.plan_handle) AS st
@@ -30,7 +30,7 @@ CROSS APPLY sys.dm_exec_text_query_plan(ds.plan_handle, ds.statement_start_offse
 WHERE st.dbid = DB_ID()
 AND ds.execution_count > 1
 AND (ds.min_worker_time / 1000000.) * 100. < (ds.max_worker_time / 1000000.)
-AND st.text like '%SELECT%'
+AND st.text like '%SELECT%' COLLATE SQL_Latin1_General_CP1_CS_AS
 --AND st.text like '%INVENTDIM%'
 --AND st.text like '%FAST%'
 ORDER BY max_worker_time_ms DESC
