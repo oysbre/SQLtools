@@ -1,5 +1,7 @@
-/* Find queries with parametersniffing issues in plancache. Queries with high CPU workertime difference indicate this .
-Run this DMV query on the database in question */
+/* Find queries with parametersniffing issues in plancache.
+Queries with high CPU workertime and/or logicalreads difference between min and max indicate this.
+Check dataskew in related tables for parameters and their values used in query
+Create planguide if needed to force a "good plan" */
 SELECT TOP (10)
         ds.execution_count
        ,CAST(ds.min_worker_time / 1000. as numeric) AS min_worker_time_ms
