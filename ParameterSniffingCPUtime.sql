@@ -3,7 +3,8 @@ Queries with high CPU workertime and/or logicalreads difference between min and 
 Check for dataskew in related tables used in the query for their values used in parameters
 Create planguide if needed to force a "good plan" */
 SELECT TOP (10)
-        ds.execution_count
+		DB_NAME(st.dbid) AS DatabaseName
+	   ,ds.execution_count
        ,CAST(ds.min_worker_time / 1000. as numeric) AS min_worker_time_ms
        ,CAST(ds.max_worker_time / 1000. as numeric) AS max_worker_time_ms
        ,CAST(ds.min_elapsed_time / 1000. as numeric) AS min_elapsed_time_ms
