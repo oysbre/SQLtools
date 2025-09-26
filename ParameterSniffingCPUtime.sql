@@ -27,8 +27,8 @@ FROM sys.dm_exec_query_stats AS ds
 CROSS APPLY sys.dm_exec_sql_text(ds.plan_handle) AS st
 CROSS APPLY sys.dm_exec_query_plan(ds.plan_handle) AS dp
 CROSS APPLY sys.dm_exec_text_query_plan(ds.plan_handle, ds.statement_start_offset, ds.statement_end_offset) etqp
-WHERE st.dbid = DB_ID()
-AND ds.execution_count > 1
+WHERE ds.execution_count > 1 /* filter on queries runned more than once */
+--AND st.dbid = DB_ID() /* filter on current select database only, else run on SQL instance */
 AND (ds.min_worker_time / 1000000.) * 100. < (ds.max_worker_time / 1000000.) /* filter on workertime that may suffer from parametersniffing */
 AND st.text like '%SELECT%' COLLATE SQL_Latin1_General_CP1_CS_AS /* filter on SELECT case-sensitive */
 --AND st.text like '%INVENTDIM%' /* filter on specific table in plans */
