@@ -2,9 +2,8 @@
 
 #---- Set variables ------
 $SQLsrvName = 'localhost' #<-- if using named instance, set variable like: 'localhost\sqlexpress'
-$RestoreDatabase ='axdb_copy'
-$BAKpath = "FileSystem::C:\Program Files\Microsoft SQL Server\MSSQL15.MSSQLSERVER\MSSQL\Backup" #<-- make sure this path ONLY contains backupfiles of the database that is going to be restored!
-$TRNpath = "FileSystem::\\<uncpath_to_TRN>" #<-- make sure this path ONLY contains Transaction files of the database that is going to be restored!
+$RestoreDatabase ='AXDB'
+
 #-------END VARIABLES. Do not change anything below this line -----
 
 $simpleRecoveryMode = read-host "Restore database with [F]ULL or [S]imple Recovery mode?"
@@ -38,14 +37,8 @@ if ($dbexists.checkexists -eq 'true'){
 
 }
 
-Write-host "This script restores a database named $($RestoreDatabase) on $($SQLsrvName) from $($BAKpath)" -foregroundcolor Magenta
 
-#Get latest BAK file  from the backup path $BAKpath
-$BAKFile = Get-ChildItem "$BAKpath\*.bak" | Sort-Object LastWriteTime -Descending | Select-Object -First 1
 
-#check if we got a BAK file to process
-if ($BAKFile){
-write-host "Got BAK file $($BAKFile.name). Processing..." -foregroundcolor yellow
 
 #Get SQL instance data-/log-/backuppaths
 $localinstpathQ= @"
@@ -64,24 +57,27 @@ if ($localdatapaths.bakpath -notcontains '\'){
 
 
 if ($localdatapaths){
-    #Trim spaces from paths
-    ($localdatapaths.bakpath).trim()
-    ($localdatapaths.logpath).trim()
-    ($localdatapaths.datapath).trim()
+ #Trim spaces from paths
+$BAKpath = ($localdatapaths.bakpath).trim()
+$TRNpath= ($localdatapaths.logpath).trim()
+ ($localdatapaths.datapath).trim()
 
-    if (!(test-path "$($localdatapaths.bakpath)\tempfiles")){
-        new-item "$($localdatapaths.bakpath)\tempfiles" -type directory -force
-    }
-    #copy BAK file to local server
-    write-host "Please wait while copying BAK file '$($BAKFile.name)' from '$($BAKpath)' to '$($localdatapaths.bakpath)\tempfiles'..." -foregroundcolor yellow
-    copy-item $BAKFile "$($localdatapaths.bakpath)\tempfiles"
-    
-    #get the copied BAK file
-    $localBakFile = Get-ChildItem "$($localdatapaths.bakpath)\tempfiles\*.bak"
+#Get latest BAK file  from the backup path $BAKpath
+$BAKFile = Get-ChildItem "$BAKpath\*.bak" | Sort-Object LastWriteTime -Descending | Select-Object -First 1
+Write-host "This script restores a database named $($RestoreDatabase) on $($SQLsrvName) from $($BAKpath)" -foregroundcolor Magenta
+#check if we got a BAK file to process
+if ($BAKFile){
+write-host "Got BAK file $($BAKFile.name). Processing..." -foregroundcolor yellow
+
+ 
+
+    #get the BAK file
+    $localBakFile = Get-ChildItem "$($localdatapaths.bakpath)\*.bak"
     $localBakFile.lastwritetime = $BAKFile.lastwritetime
+    
     #Extract logical name and physical path from bakfile
     $relocate = @()
-    $dbfiles = Invoke-Sqlcmd -ServerInstance $SQLsrvName -Database tempdb -Query "RESTORE FILELISTONLY FROM DISK='$localBakFile';"
+    $dbfiles = Invoke-Sqlcmd -ServerInstance $SQLsrvName -Database tempdb -Query "RESTORE FILELISTONLY FROM DISK='$BAKFile';"
     
     #Loop through filelist, replace old paths with new restore paths
     foreach($dbfile in $dbfiles){
