@@ -1,5 +1,29 @@
 /* find plans with Index Spool. To search in a specific database, filter on DBID in pa.value in line 24*/
 /* create non-clustered index to avoid the spool. seek predicate = key in index and output column in includes */
+--azure sql
+;WITH XMLNAMESPACES (
+    DEFAULT 'http://microsoft.com'
+)
+SELECT 
+    q.query_id,
+    p.plan_id,
+    t.query_sql_text,
+    CAST(p.query_plan AS XML) AS [Execution Plan],
+    p.last_execution_time
+FROM sys.query_store_plan p
+JOIN sys.query_store_query q 
+    ON p.query_id = q.query_id
+JOIN sys.query_store_query_text t 
+    ON q.query_text_id = t.query_text_id
+CROSS APPLY (
+    SELECT CAST(p.query_plan AS XML) AS query_plan_xml
+) AS xml_conv
+WHERE xml_conv.query_plan_xml.exist('//RelOp[@PhysicalOp="Index Spool" and @LogicalOp="Eager Spool"]') = 1
+ORDER BY p.last_execution_time DESC;
+
+
+
+--OnPrem
 ;WITH 
     XMLNAMESPACES 
 ('http://schemas.microsoft.com/sqlserver/2004/07/showplan' AS x),
